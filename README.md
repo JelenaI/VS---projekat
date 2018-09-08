@@ -2,7 +2,7 @@
 
 U ovom projektu je napravljen novi algoritam pretrage u KLEE-u.
 
-Prevodjenje i pokretanje:
+# Prevodjenje i pokretanje:
 
   Da bi projekat mogao da se pokrene neophodno je da se na računaru nalazi već skinut i izbildovan KLEE. Ukoliko to nije slučaj,    detaljan postupak se može naći na: https://github.com/tum-i22/klee-install.
   
@@ -55,7 +55,7 @@ Prevodjenje i pokretanje:
     myklee-stats klee-last
 
 
-Korišćenje:
+# Korišćenje:
   
   Upotrebu klee alata u našem projektu smo automatizovali upotrebom skripta measure_time.sh. Skript koristimo na primer na sledeći način (detaljnije o načinu upotrebe i značenju promenljivih se može naći u zaglavlju skripta):
   
@@ -65,6 +65,6 @@ Korišćenje:
 Test primeri i skript se mogu naći u direktorijumu primeri.
 
 
-Primeri:
+# Primeri:
 
 Primeri koje smo mi koristili se mogu naći u direktorijumu primeri, detaljnije o njima se može naći u fajlu SystemDescription.pdf u sekciji primeri. Uopšteno se može koristiti bilo koji c kod uz primenu prethodNo opisanih instrukcija za pripremu pokreatanja programa sa klee alatom.
