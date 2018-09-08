@@ -11,6 +11,7 @@
 #define KLEE_SEARCHER_H
 
 #include "llvm/Support/raw_ostream.h"
+#include <iostream>
 #include <vector>
 #include <set>
 #include <map>
@@ -32,9 +33,8 @@ namespace klee {
       ExecutionState *state;
       node* left;
       node* right;
-      int height = 0;
+      int height;
   };
-
 
   class Searcher {
   public:
@@ -117,11 +117,13 @@ namespace klee {
     }
   };
 
+//////////////////
+
   class NASSearcher : public Searcher {
     node* root;
 
   public:
-    ~NASSearcher();
+  
     ExecutionState &selectState();
     void update(ExecutionState *current,
                 const std::vector<ExecutionState *> &addedStates,
@@ -132,26 +134,22 @@ namespace klee {
     }
     node* insert(ExecutionState* x, node* t);
   
-    node* singleRightRotate(node* &t);
-  
-    node* singleLeftRotate(node* &t);
-  
-    node* doubleLeftRotate(node* &t);
-  
-    node* doubleRightRotate(node* &t);
-  
-    node* findMin(node* t);
-  
+    //
+    node* leftRotate(node *x);
+    node* rightRotate(node *x);
+    //
+    
     node* findMax(node* t);
+    node* findMin(node* t);
   
     node* remove(ExecutionState* x, node* t, bool* ind);
 
     int height(node* t);
 
     int getBalance(node *N);
-
   };
 
+//////////////////
 
   class RandomSearcher : public Searcher {
     std::vector<ExecutionState*> states;

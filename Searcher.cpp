@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include <iostream>
+#include <algorithm>
 #include <math.h>
 #include <cstdlib>
 #include "Searcher.h"
@@ -132,34 +133,21 @@ void BFSSearcher::update(ExecutionState *current,
   }
 }
 
-//
+////////////////
 ExecutionState &NASSearcher::selectState() {
-  // std::cout<<"u slect state sam"<<std::endl;
-  // std::cout<<"selectState"<< std::endl;
-    
-  return *root->state;
+  return *(root->state);
 }
 
 void NASSearcher::update(ExecutionState *current,
                          const std::vector<ExecutionState *> &addedStates,
                          const std::vector<ExecutionState *> &removedStates) {
-  
-  // std::cout<<"u update sam"<<std::endl;
-    
+
   for (std::vector<ExecutionState *>::const_iterator it = addedStates.begin(),
                                                      ie = addedStates.end();
       it != ie; ++it) {
     
-    // std::cout<<"update"<<std::endl;
-    
-    // StackFrame &sf = (*it)->stack.back();
-    // uint64_t count = sf.callPathNode->statistics.getValue(stats::instructions);
-    // double inv = 1. / std::max((uint64_t) 1, count);
-    
-    (*it)->weight = rand();
-    // std::cout<<"dodajem states"<<std::endl;
+    (*it)->nasWeight = rand();
     root = insert(*it, root);
-    // std::cout<<"dodajem states 2"<<std::endl;
   }
   
   for (std::vector<ExecutionState *>::const_iterator it = removedStates.begin(),
@@ -167,18 +155,12 @@ void NASSearcher::update(ExecutionState *current,
        it != ie; ++it) {
 
     bool ok = false;
+    
     root = remove(*it, root, &ok);
+    
     assert(ok && "invalid state removed");
-  }
-}
 
-NASSearcher::~NASSearcher() {
-  if (root != NULL) {
-    delete root->left;
-    delete root->right;
-    delete root;
-  } 
-  root = NULL;
+  }
 }
 
 node* NASSearcher::insert(ExecutionState* x, node* t)
@@ -187,90 +169,84 @@ node* NASSearcher::insert(ExecutionState* x, node* t)
     {
         t = new node;
         t->state = x;
-        t->height = 0;
-        t->left = t->right = NULL;
+        t->height = 1;
+        t->left = NULL;
+        t->right = NULL;
     }
-    else if(x->weight < t->state->weight)
+    else if(x->nasWeight < t->state->nasWeight)
     {
         t->left = insert(x, t->left);
     }
-    else if(x->weight >= t->state->weight)
+    else if(x->nasWeight >= t->state->nasWeight)
     {
         t->right = insert(x, t->right);
     }
 
+    t->height = std::max(height(t->left), height(t->right))+1;
+
     int balance = getBalance(t);
  
-    // If this node becomes unbalanced, then there are 4 cases
+    // Ako je cvor nebalansiran, onda imamo cetiri razlicita slucaja 
+    // slucaj levo levo
+    if (balance > 1 && x->nasWeight < t->left->state->nasWeight)
+        return rightRotate(t);
  
-    // Left Left Case
-    if (balance > 1 && x->weight < t->left->state->weight)
-        return singleRightRotate(t);
+    // slucaj desno desno
+    if (balance < -1 && x->nasWeight > t->right->state->nasWeight)
+        return leftRotate(t);
  
-    // Right Right Case
-    if (balance < -1 && x->weight > t->right->state->weight)
-        return singleLeftRotate(t);
- 
-    // Left Right Case
-    if (balance > 1 && x->weight > t->left->state->weight)
+    // slucaj levo desno
+    if (balance > 1 && x->nasWeight > t->left->state->nasWeight)
     {
-        return doubleRightRotate(t);
+        t->left =  leftRotate(t->left);
+        return rightRotate(t);
     }
  
-    // Right Left Case
-    if (balance < -1 && x->weight < t->right->state ->weight)
+    // slucaj desno levo
+    if (balance < -1 && x->nasWeight < t->right->state->nasWeight)
     {
-        return doubleLeftRotate(t);
+        t->right = rightRotate(t->right);
+        return leftRotate(t);
     }
 
-    t->height = std::max(height(t->left), height(t->right))+1;
     return t;
 }
 
-node* NASSearcher::singleRightRotate(node* &t)
+node* NASSearcher::rightRotate(node *y)
 {
-    node* u = t->left;
-    t->left = u->right;
-    u->right = t;
-    t->height = std::max(height(t->left), height(t->right))+1;
-    u->height = std::max(height(u->left), t->height)+1;
-    return u;
+    node *x = y->left;
+    node *T2 = x->right;
+ 
+    x->right = y;
+    y->left = T2;
+ 
+    y->height = std::max(height(y->left), height(y->right))+1;
+    x->height = std::max(height(x->left), height(x->right))+1;
+ 
+    return x;
 }
-
-node* NASSearcher::singleLeftRotate(node* &t)
+ 
+node* NASSearcher::leftRotate(node *x)
 {
-
-    node* u = t->right;
-    t->right = u->left;
-    u->left = t;
-    
-    t->height = std::max(height(t->left), height(t->right))+1;
-    u->height = std::max(height(t->right), t->height)+1 ;
-
-    return u;
-}
-
-node* NASSearcher::doubleLeftRotate(node* &t)
-{
-    t->right = singleRightRotate(t->right);
-    return singleLeftRotate(t);
-}
-
-node* NASSearcher::doubleRightRotate(node* &t)
-{
-    t->left = singleLeftRotate(t->left);
-    return singleRightRotate(t);
-
+    node *y = x->right;
+    node *T2 = y->left;
+ 
+    y->left = x;
+    x->right = T2;
+ 
+    x->height = std::max(height(x->left), height(x->right))+1;
+    y->height = std::max(height(y->left), height(y->right))+1;
+ 
+    return y;
 }
 
 node* NASSearcher::findMin(node* t)
 {
-    if(t == NULL)
-        return NULL;
-    else if(t->left == NULL)
-        return t;
-    else
-        return findMin(t->left);
+    node* current = t;
+    while (current->left != NULL)
+        current = current->left;
+ 
+    return current;
 }
 
 node* NASSearcher::findMax(node* t)
@@ -284,109 +260,66 @@ node* NASSearcher::findMax(node* t)
 }
 
 node* NASSearcher::remove(ExecutionState* x, node* t, bool* ind) {
-    node* temp;
 
-    // Element not found
     if(t == NULL)
-        return NULL;
+        return t;
 
-    // Searching for element
-    else if(x->weight < t->state->weight)
+    else if(x->nasWeight < t->state->nasWeight)
         t->left = remove(x, t->left, ind);
-    else if(x->weight > t->state->weight)
+    else if(x->nasWeight > t->state->nasWeight)
         t->right = remove(x, t->right, ind);
 
-    // Element found
-    // With 2 children
-    else if(t->left && t->right)
-    {
-
-        *ind = true;
-        temp = findMin(t->right);
-        t->state = temp->state;
-        t->right = remove(t->state, t->right, ind);
-    }
-    // With one or zero child
-    else
-    {
-
-        // std::cout<<"2"<<std::endl;
-        *ind = true;
-        temp = t;
-        if(t->left == NULL)
-            t = t->right;
-        else if(t->right == NULL)
-            t = t->left;
-        delete temp;
+    else {
+        if( (t->left == NULL) || (t->right == NULL) )
+        {
+            node *temp = t->left ? t->left : t->right;
+ 
+            if (temp == NULL)
+            {
+                temp = t;
+                t = NULL;
+            }
+            else 
+            {
+                t->left = temp->left;
+                t->right = temp->right;
+                t->state = temp->state;
+            }
+            delete temp;
+            *ind = true;
+        }
+        else
+        {
+            node* temp = findMin(t->right);
+            t->state = temp->state;
+            t->right = remove(temp->state, t->right, ind);
+        }
     }
     if(t == NULL)
         return t;
 
     t->height = std::max(height(t->left), height(t->right))+1;
 
-    // If node is unbalanced
-    // If left node is deleted, right case
-    
-    // std::cout<<"3"<<std::endl;
-    // if(height(t->left) - height(t->right) == 2)
-    // {
-    //   std::cout<<"4"<<std::endl;
-    
-    //     // right right case
-    //     if(height(t->left->left) - height(t->left->right) == 1)
-    //         return singleLeftRotate(t);
-    //     // right left case
-    //     else
-
-    //         return doubleLeftRotate(t);
-    // }
-    // // If right node is deleted, left case
-    // else if(height(t->right) - height(t->left) == 2)
-    // {
-    //   std::cout<<"5"<<std::endl;
-    //   std::cout<<"5 "<<t->right->height<<" "<<" "<<t->height<<std::endl;
-
-    //   std::cout<<"5"<<t<<std::endl;
-    //     // left left case
-    //     if(height(t->right->right) - height(t->right->left) == 1){
-    //         std::cout<<"7"<<std::endl;
-    
-    //         return singleRightRotate(t);
-    //     }
-    //     // left right case
-    //     else{
-    //         std::cout<<"8 "<<t->right->height<<" "<<t->left->height<<" "<<t->height<<std::endl;
-    
-    //         return doubleRightRotate(t);
-
-    //         std::cout<<"9"<<std::endl;
-    //     }
-    // }
-    // std::cout<<"6"<<std::endl;
     int balance = getBalance(t);
- 
-    // If this node becomes unbalanced, then there are 4 cases
- 
-    // Left Left Case
     if (balance > 1 && getBalance(t->left) >= 0)
-        return singleRightRotate(t);
- 
-    // Left Right Case
+        return rightRotate(t);
+
     if (balance > 1 && getBalance(t->left) < 0)
     {
-      return doubleRightRotate(t);
+        t->left =  leftRotate(t->left);
+        return rightRotate(t);
     }
- 
-    // Right Right Case
+
     if (balance < -1 && getBalance(t->right) <= 0)
-        return singleLeftRotate(t);
- 
-    // Right Left Case
+        return leftRotate(t);
+
     if (balance < -1 && getBalance(t->right) > 0)
     {
-        return doubleLeftRotate(t);
+        t->right = rightRotate(t->right);
+        return leftRotate(t);
         
     }
+    
     return t;
 }
 
@@ -400,7 +333,7 @@ int NASSearcher::getBalance(node* t)
 int NASSearcher::height(node* t) {
         return (t == NULL ? 0 : t->height);
 }
-///
+/////////////////
 
 ExecutionState &RandomSearcher::selectState() {
   return *states[theRNG.getInt32()%states.size()];
