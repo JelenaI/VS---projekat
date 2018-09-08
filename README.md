@@ -67,4 +67,4 @@ Test primeri i skript se mogu naći u direktorijumu primeri.
 
 Primeri:
 
-Primeri koje smo mi koristili se mogu naći u direktorijumu primeri, detaljnije o njima se može naći u fajlu SystemDescription.pdf u sekciji primeri. Uopšteno se može koristiti bilo koji c kod uz primenu prethodo opisanih instrukcija za pripremu pokreatanja programa sa klee alatom.
+Primeri koje smo mi koristili se mogu naći u direktorijumu primeri, detaljnije o njima se može naći u fajlu SystemDescription.pdf u sekciji primeri. Uopšteno se može koristiti bilo koji c kod uz primenu prethodNo opisanih instrukcija za pripremu pokreatanja programa sa klee alatom.
